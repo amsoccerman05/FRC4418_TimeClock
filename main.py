@@ -1,18 +1,18 @@
 # This Python file uses the following encoding: utf-8
 # Uses a subclassed UiLoader from https://gist.github.com/cpbotha/1b42a20c8f3eb9bb7cb8
-# pip install PySide2 pandas PySerial
+# pip install PySide6 pandas PySerial
 
 import os
 from pathlib import Path
 import sys
 
-from PySide2.QtWidgets import QApplication, QWidget, QFileDialog, QMainWindow, QVBoxLayout, QTableWidgetItem, QPushButton
-from PySide2.QtCore import QFile, QRegularExpression, QAbstractTableModel, QAbstractListModel, Qt
-from PySide2.QtCore import Slot, QMetaObject, QModelIndex, QSettings, QTimer, QDateTime, QTime, QEvent
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtGui import QRegularExpressionValidator as QRegExpValidator
-from PySide2.QtGui import QIcon
-from PySide2 import QtGui
+from PySide6.QtWidgets import QApplication, QWidget, QFileDialog, QMainWindow, QVBoxLayout, QTableWidgetItem, QPushButton
+from PySide6.QtCore import QFile, QRegularExpression, QAbstractTableModel, QAbstractListModel, Qt
+from PySide6.QtCore import Slot, QMetaObject, QModelIndex, QSettings, QTimer, QDateTime, QTime, QEvent
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtGui import QRegularExpressionValidator as QRegExpValidator
+from PySide6.QtGui import QIcon
+from PySide6 import QtGui
 import pandas as pd
 import serial.tools.list_ports
 import serial
