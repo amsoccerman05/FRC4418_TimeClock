@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 from PySide6.QtWidgets import QApplication, QWidget, QFileDialog, QMainWindow, QVBoxLayout, QTableWidgetItem, QPushButton
-from PySide6.QtCore import QFile, QRegularExpression, QAbstractTableModel, QAbstractListModel, Qt
+from PySide6.QtCore import QFile, QRegularExpression, QAbstractTableModel, QAbstractListModel, Qt, QSize
 from PySide6.QtCore import Slot, QMetaObject, QModelIndex, QSettings, QTimer, QDateTime, QTime, QEvent
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QRegularExpressionValidator as QRegExpValidator
@@ -23,6 +23,7 @@ import re
 class Widget(QWidget):
     def __init__(self, parent=None):
         super(Widget, self).__init__(parent)
+        self.icon_path = resource_path('4418.png')
         self.load_ui()
         self.apply_styles()
         self.id_reader_clock = QTimer(self)
@@ -33,7 +34,6 @@ class Widget(QWidget):
         self.load_id_input()
         self.load_guest_name_input()
         self.load_btns()
-        self.icon_path = resource_path('4418.png')
         self.setWindowIcon(QIcon(self.icon_path))
 
     # Load in the ui file created in Qt Designer
@@ -45,6 +45,7 @@ class Widget(QWidget):
         self.ui.tableView.setSortingEnabled(True)
         self.tableWidget_guests.setColumnCount(2)
         self.update_sign_mode_ui()
+        self.setup_option_icons()
 
     def apply_styles(self):
         self.setStyleSheet("""
@@ -95,6 +96,25 @@ class Widget(QWidget):
             QPushButton:disabled {
                 background: #c9d4e5;
                 color: #6b7785;
+            }
+            QPushButton#btn_icon_home,
+            QPushButton#btn_icon_work,
+            QPushButton#btn_icon_other,
+            QPushButton#btn_icon_signin_mode,
+            QPushButton#btn_icon_signout_mode {
+                background: #ffffff;
+                color: #1f2a36;
+                border: 1px solid #d0d7de;
+                border-radius: 4px;
+                padding: 0px;
+            }
+            QPushButton#btn_icon_home:hover,
+            QPushButton#btn_icon_work:hover,
+            QPushButton#btn_icon_other:hover,
+            QPushButton#btn_icon_signin_mode:hover,
+            QPushButton#btn_icon_signout_mode:hover {
+                background: #f0f6ff;
+                border-color: #9fb7e7;
             }
             QRadioButton, QCheckBox, QLabel {
                 background: transparent;
@@ -277,6 +297,11 @@ class Widget(QWidget):
         self.ui.rbtn_signin_mode.toggled.connect(self.update_sign_mode_ui)
         self.ui.rbtn_signout_mode.toggled.connect(self.update_sign_mode_ui)
         self.update_sign_mode_ui()
+        self.ui.btn_icon_home.clicked.connect(lambda: self.ui.rbtn_home.setChecked(True))
+        self.ui.btn_icon_work.clicked.connect(lambda: self.ui.rbtn_work.setChecked(True))
+        self.ui.btn_icon_other.clicked.connect(self.select_other_dest)
+        self.ui.btn_icon_signin_mode.clicked.connect(lambda: self.ui.rbtn_signin_mode.setChecked(True))
+        self.ui.btn_icon_signout_mode.clicked.connect(lambda: self.ui.rbtn_signout_mode.setChecked(True))
 
     def update_sign_mode_ui(self):
         sign_in = self.ui.rbtn_signin_mode.isChecked()
@@ -286,6 +311,24 @@ class Widget(QWidget):
         self.ui.rbtn_work.setEnabled(not sign_in)
         self.ui.rbtn_other.setEnabled(not sign_in)
         self.ui.lineEdit_destination_other.setEnabled(not sign_in)
+        self.ui.btn_icon_home.setEnabled(not sign_in)
+        self.ui.btn_icon_work.setEnabled(not sign_in)
+        self.ui.btn_icon_other.setEnabled(not sign_in)
+
+    def setup_option_icons(self):
+        icon = QIcon(self.icon_path)
+        icon_buttons = [
+            self.ui.btn_icon_home,
+            self.ui.btn_icon_work,
+            self.ui.btn_icon_other,
+            self.ui.btn_icon_signin_mode,
+            self.ui.btn_icon_signout_mode,
+        ]
+        for btn in icon_buttons:
+            btn.setIcon(icon)
+            btn.setIconSize(QSize(16, 16))
+            btn.setFlat(True)
+            btn.setToolTip("Select option")
 
     # Methods for the ID reader
     def enable_id_reader(self):
@@ -574,7 +617,8 @@ class Widget(QWidget):
         self.ui.listView.setModel(self.model_active_users)
 
     def select_other_dest(self):
-        self.ui.rbtn_other.setDown(1)
+        self.ui.rbtn_other.setChecked(True)
+        self.focus_other_text_field()
 
     def focus_other_text_field(self):
         self.ui.lineEdit_destination_other.selectAll()
