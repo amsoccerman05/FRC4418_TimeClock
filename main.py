@@ -24,6 +24,7 @@ class Widget(QWidget):
     def __init__(self, parent=None):
         super(Widget, self).__init__(parent)
         self.load_ui()
+        self.apply_styles()
         self.id_reader_clock = QTimer(self)
         self.id_reader_clock.timeout.connect(self.read_id)
         self.load_timers()
@@ -43,6 +44,68 @@ class Widget(QWidget):
         self.setWindowTitle('Time Tracker')
         self.ui.tableView.setSortingEnabled(True)
         self.tableWidget_guests.setColumnCount(2)
+        self.update_sign_mode_ui()
+
+    def apply_styles(self):
+        self.setStyleSheet("""
+            QWidget {
+                font-family: "Segoe UI";
+                color: #1f2a36;
+                background: #f4f6f8;
+            }
+            QTabWidget::pane {
+                border: 1px solid #cfd8e3;
+                background: #ffffff;
+            }
+            QTabBar::tab {
+                background: #e3e8ef;
+                border: 1px solid #cfd8e3;
+                border-bottom: none;
+                padding: 6px 14px;
+                margin-right: 4px;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+            }
+            QTabBar::tab:selected {
+                background: #ffffff;
+            }
+            QLineEdit, QTextEdit, QTableView, QListView, QComboBox, QTimeEdit {
+                background: #ffffff;
+                border: 1px solid #d0d7de;
+                border-radius: 6px;
+                padding: 6px;
+            }
+            QLineEdit[readOnly="true"] {
+                background: #f7f9fb;
+            }
+            QPushButton {
+                background: #1f6feb;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: #1a5fd0;
+            }
+            QPushButton:pressed {
+                background: #174ea6;
+            }
+            QPushButton:disabled {
+                background: #c9d4e5;
+                color: #6b7785;
+            }
+            QRadioButton, QCheckBox, QLabel {
+                background: transparent;
+            }
+            QHeaderView::section {
+                background: #e9eef5;
+                border: 1px solid #d0d7de;
+                padding: 4px 8px;
+                font-weight: 600;
+            }
+        """)
 
     # Methods for repeating actions, like updating the clock and polling the id reader
     def load_timers(self):
@@ -211,6 +274,18 @@ class Widget(QWidget):
         self.ui.lineEdit_destination_other.installEventFilter(self)
         self.ui.btn_open_com.pressed.connect(self.open_com)
         self.ui.btn_close_com.pressed.connect(self.close_com)
+        self.ui.rbtn_signin_mode.toggled.connect(self.update_sign_mode_ui)
+        self.ui.rbtn_signout_mode.toggled.connect(self.update_sign_mode_ui)
+        self.update_sign_mode_ui()
+
+    def update_sign_mode_ui(self):
+        sign_in = self.ui.rbtn_signin_mode.isChecked()
+        self.ui.btn_signin.setText("Sign In" if sign_in else "Sign Out")
+        self.ui.label_9.setEnabled(not sign_in)
+        self.ui.rbtn_home.setEnabled(not sign_in)
+        self.ui.rbtn_work.setEnabled(not sign_in)
+        self.ui.rbtn_other.setEnabled(not sign_in)
+        self.ui.lineEdit_destination_other.setEnabled(not sign_in)
 
     # Methods for the ID reader
     def enable_id_reader(self):
@@ -326,14 +401,22 @@ class Widget(QWidget):
             self.temp_data.reset_index(drop=True, inplace=True)
         self.ui.lineEdit_id_enter.clear()
 
-        # Check if person is in active users and then sign in or out
+        # Check if person is in active users and then sign in or out based on mode
         if not self.temp_data.empty:
-            if self.active_users.query('ID == @self.id').empty:
-                # Sign in the person and add to active users list
-                self.sign_in(signin_data=self.temp_data)
+            sign_in_mode = self.ui.rbtn_signin_mode.isChecked()
+            is_active = not self.active_users.query('ID == @self.id').empty
+            if sign_in_mode:
+                if is_active:
+                    self.ui.textEdit.append("Info: User is already signed in")
+                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.End)
+                else:
+                    self.sign_in(signin_data=self.temp_data)
             else:
-                # Sign out the person and remove from active users list
-                self.sign_out(signout_data=self.temp_data, forced=forced)
+                if is_active:
+                    self.sign_out(signout_data=self.temp_data, forced=forced)
+                else:
+                    self.ui.textEdit.append("Info: User is not currently signed in")
+                    self.ui.textEdit.moveCursor(QtGui.QTextCursor.End)
         else:
             self.ui.textEdit.append("Error: User Not Found")
             self.ui.textEdit.moveCursor(QtGui.QTextCursor.End)
